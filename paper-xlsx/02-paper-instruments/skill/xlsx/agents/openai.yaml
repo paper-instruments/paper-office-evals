@@ -1,0 +1,4 @@
+interface:
+  display_name: "Paper XLSX"
+  short_description: "Use installed paper-xlsx 0.2.1 for safe Excel editing"
+  default_prompt: "Use $xlsx with the preinstalled paper-xlsx package. Preserve unrelated workbook content, respect typed refusals, and obtain only the task-specific evidence needed for the requested result."

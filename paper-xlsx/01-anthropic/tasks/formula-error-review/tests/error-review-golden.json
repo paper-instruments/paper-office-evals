@@ -1,0 +1,24 @@
+{
+  "errors": [
+    {
+      "sheet": "Close",
+      "cell": "B2",
+      "error": "#DIV/0!"
+    },
+    {
+      "sheet": "Close",
+      "cell": "B3",
+      "error": "#REF!"
+    },
+    {
+      "sheet": "Close",
+      "cell": "B4",
+      "error": "#SPILL!"
+    },
+    {
+      "sheet": "Close",
+      "cell": "B5",
+      "error": "#VALUE!"
+    }
+  ]
+}

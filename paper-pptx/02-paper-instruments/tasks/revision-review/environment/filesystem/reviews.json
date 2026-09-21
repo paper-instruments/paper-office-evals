@@ -1,0 +1,27 @@
+[
+  {
+    "review": "agenda",
+    "before": "agenda-before.pptx",
+    "after": "agenda-after.pptx"
+  },
+  {
+    "review": "copy",
+    "before": "copy-before.pptx",
+    "after": "copy-after.pptx"
+  },
+  {
+    "review": "brand",
+    "before": "brand-before.pptx",
+    "after": "brand-after.pptx"
+  },
+  {
+    "review": "handoff",
+    "before": "handoff-before.pptx",
+    "after": "handoff-after.pptx"
+  },
+  {
+    "review": "approved",
+    "before": "approved-before.pptx",
+    "after": "approved-after.pptx"
+  }
+]

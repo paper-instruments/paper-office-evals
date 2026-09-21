@@ -1,0 +1,148 @@
+{
+  "output": "report.json",
+  "kind": "revision",
+  "reviews": [
+    "agenda",
+    "copy",
+    "brand",
+    "handoff",
+    "approved"
+  ],
+  "rows": [
+    {
+      "review": "agenda",
+      "kind": "slide_order",
+      "slide": null,
+      "shape_id": null,
+      "before": [
+        "Business overview",
+        "Regional forecast",
+        "Decisions"
+      ],
+      "after": [
+        "Business overview",
+        "Decisions",
+        "Regional forecast"
+      ]
+    },
+    {
+      "review": "agenda",
+      "kind": "notes",
+      "slide": "Regional forecast",
+      "shape_id": null,
+      "before": "Confirm the forecast with regional leads.",
+      "after": "Confirm the forecast with finance."
+    },
+    {
+      "review": "copy",
+      "kind": "text",
+      "slide": "Delivery outlook",
+      "shape_id": 3,
+      "before": [
+        "Pilot launches in October.",
+        "Support staffing is confirmed."
+      ],
+      "after": [
+        "Legal review is scheduled.",
+        "Pilot launches in October.",
+        "Support staffing is confirmed."
+      ]
+    },
+    {
+      "review": "copy",
+      "kind": "table",
+      "slide": "Delivery outlook",
+      "shape_id": 4,
+      "before": [
+        [
+          "Region",
+          "Pipeline"
+        ],
+        [
+          "North",
+          "$1.8m"
+        ],
+        [
+          "South",
+          "$1.2m"
+        ]
+      ],
+      "after": [
+        [
+          "Region",
+          "Pipeline"
+        ],
+        [
+          "North",
+          "$1.8m"
+        ],
+        [
+          "South",
+          "$1.4m"
+        ],
+        [
+          "Central",
+          "$0.6m"
+        ]
+      ]
+    },
+    {
+      "review": "brand",
+      "kind": "list",
+      "slide": "Action items",
+      "shape_id": 3,
+      "before": [
+        {
+          "kind": "character",
+          "marker": "•",
+          "font": "Aptos",
+          "size_pt": 18.0
+        }
+      ],
+      "after": [
+        {
+          "kind": "none",
+          "marker": null,
+          "font": null,
+          "size_pt": null
+        }
+      ]
+    },
+    {
+      "review": "brand",
+      "kind": "list",
+      "slide": "Action items",
+      "shape_id": 4,
+      "before": [
+        {
+          "kind": "character",
+          "marker": "•",
+          "font": "Aptos",
+          "size_pt": 18.0
+        }
+      ],
+      "after": [
+        {
+          "kind": "character",
+          "marker": "•",
+          "font": "Arial",
+          "size_pt": 16.0
+        }
+      ]
+    }
+  ],
+  "task": "revision-review",
+  "inputs": {
+    "agenda-after.pptx": "f24a91b76bb35d5abcfcaa4833b007d807f42e0ef8f7374ae5277bb60052b22a",
+    "agenda-before.pptx": "727898a17a29c0243b48b2914f6ed3633c38dd6e3054ab1924d007d8c57346e2",
+    "approved-after.pptx": "4e5b72f57dfa380f117140ce805cf1f2988d31630873e91b85d5c28d968fca77",
+    "approved-before.pptx": "4e5b72f57dfa380f117140ce805cf1f2988d31630873e91b85d5c28d968fca77",
+    "brand-after.pptx": "59fd5a0e059dff9256cf148525b0a8e1e5d812a7087ffe429c733a86c3cd80af",
+    "brand-before.pptx": "aa58cb92713b2138f65f9bd3402185e3ed9711f72e48922a42f108408ac6128b",
+    "copy-after.pptx": "2fdb4fa8a7b2abe0ae7285606fc6275aba9aa9882af264e5684b737f18c78667",
+    "copy-before.pptx": "1c68bba5f4adb362fbc74958572e1f8b02fce490cef527c350dc14fe29e93427",
+    "handoff-after.pptx": "170a6f8ffef802f3ab35c1170f8c313ff0db85cd1007051f5c54b7675d8ec61d",
+    "handoff-before.pptx": "4e5b72f57dfa380f117140ce805cf1f2988d31630873e91b85d5c28d968fca77",
+    "reviews.json": "d009e4d03775e680b6929ce93992e561258f105258c59778d058a34cf6c4a480"
+  }
+}

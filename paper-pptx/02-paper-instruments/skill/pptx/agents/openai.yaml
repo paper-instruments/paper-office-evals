@@ -1,0 +1,4 @@
+interface:
+  display_name: "Paper PPTX"
+  short_description: "Create and edit professional PowerPoint decks"
+  default_prompt: "Use $pptx to create or edit this PowerPoint with professional quality and proportionate validation."

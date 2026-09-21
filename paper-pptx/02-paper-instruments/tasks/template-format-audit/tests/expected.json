@@ -1,0 +1,86 @@
+{
+  "output": "report.json",
+  "kind": "audit",
+  "rows": [
+    {
+      "slide": "Account priorities",
+      "object": "Priorities",
+      "paragraph": 1,
+      "font": "Aptos",
+      "size_pt": 22.0,
+      "color_rgb": "2E5B9A",
+      "bullet": {
+        "kind": "character",
+        "marker": "•",
+        "font": "Aptos Display",
+        "size_pt": 18.7
+      }
+    },
+    {
+      "slide": "Account priorities",
+      "object": "Priorities",
+      "paragraph": 2,
+      "font": "Aptos",
+      "size_pt": 18.0,
+      "color_rgb": "7A2455",
+      "bullet": {
+        "kind": "numbered",
+        "marker": "3.",
+        "font": "Aptos",
+        "size_pt": 16.0
+      }
+    },
+    {
+      "slide": "Account priorities",
+      "object": "Priorities",
+      "paragraph": 3,
+      "font": "Aptos",
+      "size_pt": 18.0,
+      "color_rgb": "2F6F52",
+      "bullet": {
+        "kind": "none",
+        "marker": null,
+        "font": null,
+        "size_pt": null
+      }
+    },
+    {
+      "slide": "Account priorities",
+      "object": "Template annotation",
+      "paragraph": 1,
+      "font": null,
+      "size_pt": 16.0,
+      "color_rgb": null,
+      "bullet": {
+        "kind": "none",
+        "marker": null,
+        "font": null,
+        "size_pt": null
+      }
+    }
+  ],
+  "shapes": [
+    {
+      "slide": "Brand color review",
+      "object": "Rollout banner",
+      "fill_rgb": "2F6F52",
+      "line_rgb": "203040"
+    },
+    {
+      "slide": "Brand color review",
+      "object": "Reference panel",
+      "fill_rgb": "E5EDF0",
+      "line_rgb": "7A2455"
+    },
+    {
+      "slide": "Brand color review",
+      "object": "Review highlight",
+      "fill_rgb": null,
+      "line_rgb": "none"
+    }
+  ],
+  "task": "template-format-audit",
+  "inputs": {
+    "account-template.pptx": "5f35bbe101e5dc9a924552af430fecbf8f49117fe609b56bf30cf1f1631becb9"
+  }
+}
