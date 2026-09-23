@@ -1,6 +1,6 @@
 # Paper Office Evals
 
-61 Office evals: 27 DOCX, 15 PPTX, 19 XLSX. Pass all required checks to earn 1; any failure earns 0.
+61 Office evals: 27 DOCX, 15 PPTX, 19 XLSX.
 
 ## Treatments
 
