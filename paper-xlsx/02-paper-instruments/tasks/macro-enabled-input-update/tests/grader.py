@@ -8,6 +8,8 @@ TASK = {'allowed_changed_parts': ['xl/worksheets/sheet1.xml',
                            'xl/worksheets/sheet2.xml',
                            'xl/workbook.xml'],
  'cells_from_golden': ['Schedule!B2', 'Schedule!B12', 'Summary!B1'],
+ 'formula_cache_invalidation': {'refreshed_values': {
+     'Schedule!B12': 6550, 'Schedule!B13': 6877.5, 'Summary!B1': 6550}},
  'golden': 'macro-schedule-golden.xlsm',
  'id': 'macro-enabled-input-update',
  'inputs': [{'path': 'eval_fixtures/xlsx/schedule-macro.xlsm',
