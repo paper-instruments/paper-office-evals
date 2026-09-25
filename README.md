@@ -12,6 +12,8 @@ Each format has the same tasks in three runnable Harbor datasets:
 | `02-paper-instruments` | Paper | Included in `skill/<format>` |
 | `03-no-skill` | Upstream | None |
 
+Find our latest skills at [paper-instruments/skills](https://github.com/paper-instruments/skills).
+
 ## Run
 
 Install [Harbor](https://harborframework.com/) and Docker. Configure your provider credentials and set `MODEL` to a provider-qualified model ID. From this directory:

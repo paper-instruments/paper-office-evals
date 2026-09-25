@@ -4,10 +4,11 @@
 from __future__ import annotations
 
 # Replaced by materialize_xlsx_graders.py in each standalone task grader.
-TASK = {'chart_formulas_from_golden': True,
- 'charts_from_golden': True,
- 'creation_chart_style_unspecified': True,
+TASK = {'creation_chart_contract': {
+     'sheet': 'Summary', 'anchor': [5, 1], 'title': 'Quarterly revenue',
+     'values': 'Summary!B2:B5', 'categories': 'Summary!A2:A5'},
  'creation_contract': True,
+ 'optional_validation_messages': ['Summary'],
  'creation_style_contract': {'currency_cells': ['Summary!B2',
                                                 'Summary!B3',
                                                 'Summary!B4',
@@ -24,7 +25,6 @@ TASK = {'chart_formulas_from_golden': True,
                                                'Summary!C3',
                                                'Summary!C4',
                                                'Summary!C5']},
- 'drawing_parts_from_golden': ['xl/drawings/drawing1.xml'],
  'formula_cache_invalidation': {'refreshed_values': {'Summary!D2': 40000,
                                                      'Summary!D3': 50400,
                                                      'Summary!D4': 58050,
@@ -1804,6 +1804,96 @@ def grade_chart_caches(checks, payloads, model, task):
                            chart_cache_is_fresh(series, expected, component), kind="critical_collateral")
 
 
+def grade_creation_chart(checks, payloads, model, config):
+    """Grade requested chart content and placement, not a writer's styling."""
+    def require(name, passed):
+        record(checks, name, passed, kind="critical_effect", effect_gate=True)
+
+    chart_parts = list(model["charts"])
+    require("one requested chart", len(chart_parts) == 1)
+    require("no unrequested images", not any(p.startswith("xl/media/") for p in payloads))
+    if len(chart_parts) != 1:
+        return
+    chart_part = chart_parts[0]
+    root = ET.fromstring(payloads[chart_part])
+    chart = root.find("chart:chart", NS)
+    plot = None if chart is None else chart.find("chart:plotArea", NS)
+    types = [] if plot is None else [
+        node for node in plot if local_name(node.tag).endswith("Chart")
+    ]
+    require("bar chart type", len(types) == 1 and types[0].tag ==
+            "{" + NS["chart"] + "}barChart")
+    if len(types) == 1 and local_name(types[0].tag) == "barChart":
+        direction = types[0].find("chart:barDir", NS)
+        require("bar chart direction", direction is not None and
+                direction.get("val") in {"bar", "col"})
+    title = None if chart is None else chart.find("chart:title/chart:tx/chart:rich", NS)
+    drawing_ns = "http://schemas.openxmlformats.org/drawingml/2006/main"
+    text = "" if title is None else "".join(
+        node.text or "" for node in title.iter("{" + drawing_ns + "}t")
+    )
+    require("chart title", text == config["title"])
+    require("no external chart data", root.find(".//chart:externalData", NS) is None)
+    series = chart_series(root)
+    require("one revenue series", len(series) == 1)
+    if len(series) == 1:
+        for component, field in (("val", "values"), ("cat", "categories")):
+            require("chart " + field, chart_reference_formula(series[0], component) ==
+                    canonical_chart_formula(config[field]))
+
+    def target(part, node, kind):
+        rid = node.get("{" + NS["rel"] + "}id")
+        edges = ET.fromstring(payloads.get(relationship_part(part), b"<Relationships/>"))
+        matches = [edge for edge in edges if edge.get("Id") == rid]
+        if (len(matches) != 1 or matches[0].get("TargetMode") == "External"
+                or not matches[0].get("Type", "").endswith("/" + kind)):
+            raise HardFailure("invalid creation chart relationship")
+        return rel_target(part, matches[0].get("Target", ""))
+
+    sheet = model["sheets"].get(config["sheet"])
+    drawings = [] if sheet is None else sheet["xml"].findall("main:drawing", NS)
+    require("chart attached to requested sheet", len(drawings) == 1)
+    if len(drawings) != 1:
+        return
+    drawing_part = target(sheet["part"], drawings[0], "drawing")
+    drawing = ET.fromstring(payloads[drawing_part])
+    drawing_parts = [p for p in payloads if p.startswith("xl/drawings/") and p.endswith(".xml")]
+    require("one chart drawing", drawing_parts == [drawing_part] and len(drawing) == 1)
+    if len(drawing) != 1:
+        return
+    anchor = drawing[0]
+    xdr = "{http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing}"
+    start = anchor.find(xdr + "from")
+    position = None if start is None else [
+        int(start.findtext(xdr + axis, "-1")) for axis in ("col", "row")
+    ]
+    offsets = None if start is None else [
+        int(start.findtext(xdr + axis, "0")) for axis in ("colOff", "rowOff")
+    ]
+    require("chart at requested cell", local_name(anchor.tag) in
+            {"oneCellAnchor", "twoCellAnchor"} and position == config["anchor"]
+            and offsets == [0, 0])
+    frames = anchor.findall(xdr + "graphicFrame")
+    links = anchor.findall(".//chart:chart", NS)
+    require("one chart object and no extra shapes", len(frames) == len(links) == 1
+            and all(local_name(node.tag) in
+                    {"from", "to", "ext", "graphicFrame", "clientData"} for node in anchor))
+    if len(links) == 1:
+        require("drawing points to requested chart", target(drawing_part, links[0], "chart") == chart_part)
+    # Chart dimensions are unspecified, but a zero-sized chart is not a deliverable.
+    if local_name(anchor.tag) == "oneCellAnchor":
+        extent = anchor.find(xdr + "ext")
+        require("chart has visible extent", extent is not None and
+                all(int(extent.get(axis, "0")) > 0 for axis in ("cx", "cy")))
+    elif local_name(anchor.tag) == "twoCellAnchor" and start is not None:
+        end = anchor.find(xdr + "to")
+        require("chart has visible extent", end is not None and all(
+            (int(end.findtext(xdr + axis, "-1")), int(end.findtext(xdr + offset, "0"))) >
+            (int(start.findtext(xdr + axis, "-1")), int(start.findtext(xdr + offset, "0")))
+            for axis, offset in (("col", "colOff"), ("row", "rowOff"))
+        ))
+
+
 def probe_identity() -> tuple[int, int] | None:
     if os.geteuid() != 0:
         return None
@@ -1940,6 +2030,16 @@ def _grade(root: Path, task: dict) -> dict:
                 expected["value"] = value
                 expected["cache_state"] = "value"
 
+    # Message wording was not requested for this new workbook. Keep validation
+    # ranges, choices, counts and behavior flags exact; edit tasks stay strict.
+    for title in task.get("optional_validation_messages", []):
+        for model in (output_model, golden_model):
+            for validation in model["sheets"].get(title, {}).get("data_validations", []):
+                validation["attributes"] = tuple(
+                    (key, value) for key, value in validation["attributes"]
+                    if key not in {"error", "errorTitle", "prompt", "promptTitle"}
+                )
+
     pivot_config = task.get("pivot_refresh_contract", {})
     pivot_refreshed = False
     if pivot_config.get("records_part"):
@@ -2014,6 +2114,8 @@ def _grade(root: Path, task: dict) -> dict:
             kind="critical_effect" if changed else "critical_collateral",
             effect_gate=changed,
         )
+    if task.get("creation_chart_contract"):
+        grade_creation_chart(checks, output_payloads, output_model, task["creation_chart_contract"])
     if task.get("chart_formulas_from_golden"):
         changed = primary_model["chart_formulas"] != golden_model["chart_formulas"]
         record(
@@ -2036,7 +2138,7 @@ def _grade(root: Path, task: dict) -> dict:
             kind="critical_effect" if changed else "critical_collateral",
             effect_gate=changed,
         )
-    if task.get("charts_from_golden") or task.get("chart_cache_contract"):
+    if task.get("charts_from_golden") or task.get("chart_cache_contract") or task.get("creation_chart_contract"):
         grade_chart_caches(checks, output_payloads, output_model, task)
     for part in task.get("drawing_parts_from_golden", []):
         actual = output_payloads.get(part)

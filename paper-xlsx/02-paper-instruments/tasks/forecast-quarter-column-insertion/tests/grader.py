@@ -12,6 +12,15 @@ TASK = {'allowed_changed_parts': ['xl/charts/chart1.xml',
  'chart_formulas_from_golden': True,
  'charts_from_golden': True,
  'defined_names_from_golden': True,
+ 'numeric_sum_contract': {
+     'Forecast!G2': ['B2', 'D2', 'E2', 'F2'],
+     'Forecast!G3': ['B3', 'D3', 'E3', 'F3'],
+     'Forecast!G4': ['B4', 'D4', 'E4', 'F4']},
+ 'formula_cache_invalidation': {'refreshed_values': {
+     'Forecast!G2': 485, 'Forecast!B3': 62, 'Forecast!C3': 69.44,
+     'Forecast!D3': 73.78, 'Forecast!E3': 78.12, 'Forecast!F3': 86.8,
+     'Forecast!G3': 300.7, 'Forecast!G4': 111,
+     'Summary!B1': 485, 'Summary!B2': 111, 'Summary!B3': 140}},
  'drawing_parts_from_golden': ['xl/drawings/drawing1.xml'],
  'golden': 'forecast-golden.xlsx',
  'id': 'forecast-quarter-column-insertion',
@@ -205,6 +214,86 @@ def xml_signature(payload: bytes):
 
 _SIMPLE_SHEET_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]*$")
 _QUOTED_SHEET_REFERENCE = re.compile(r"'((?:[^']|'')+)'!")
+
+
+def matches_numeric_sum(formula: str | None, references: list[str]) -> bool:
+    """Recognize bounded sums of the required numeric cells, not cached answers.
+
+    Only local A1 references, same-row ranges, SUM, + and parentheses are
+    supported. Ranges are SUM arguments, never operands of array arithmetic.
+    Fixture cell checks independently enforce the numeric inputs and formulas.
+    """
+    if not formula or len(formula) > 512:
+        return False
+    text = formula.removeprefix("=").upper()
+    tokens = re.findall(r"\$?[A-Z]{1,3}\$?[1-9][0-9]*|SUM|[()+,:]|\s+|.", text)
+    tokens = [token for token in tokens if not token.isspace()]
+    position = 0
+
+    def take(token):
+        nonlocal position
+        if position < len(tokens) and tokens[position] == token:
+            position += 1
+            return True
+        return False
+
+    def require(token):
+        if not take(token):
+            raise ValueError("unexpected token")
+
+    def reference():
+        nonlocal position
+        if position >= len(tokens):
+            raise ValueError("missing reference")
+        ref = tokens[position].replace("$", "")
+        if ref not in references:
+            raise ValueError("unexpected dependency")
+        position += 1
+        return ref
+
+    def term(depth):
+        if depth > 16:
+            raise ValueError("excessive nesting")
+        if take("SUM"):
+            require("(")
+            refs, _ = expression(depth + 1)
+            while take(","):
+                more, _ = expression(depth + 1)
+                refs += more
+            require(")")
+            return refs, False
+        if take("("):
+            refs, is_range = expression(depth + 1)
+            require(")")
+            return refs, is_range
+        start = reference()
+        if not take(":"):
+            return [start], False
+        end = reference()
+        # This task's four dependencies use single-letter columns on one row.
+        if (not re.fullmatch(r"[A-Z][1-9][0-9]*", start)
+                or not re.fullmatch(r"[A-Z][1-9][0-9]*", end)
+                or start[1:] != end[1:] or start[0] > end[0]):
+            raise ValueError("unsupported range")
+        refs = [chr(column) + start[1:] for column in range(ord(start[0]), ord(end[0]) + 1)]
+        if any(ref not in references for ref in refs):
+            raise ValueError("unexpected range dependency")
+        return refs, True
+
+    def expression(depth):
+        refs, is_range = term(depth)
+        while take("+"):
+            more, other_range = term(depth)
+            if is_range or other_range:
+                raise ValueError("array arithmetic is not a scalar sum")
+            refs += more
+        return refs, is_range
+
+    try:
+        refs, is_range = expression(0)
+        return position == len(tokens) and not is_range and sorted(refs) == sorted(references)
+    except ValueError:
+        return False
 
 
 def canonical_formula(value: str | None) -> str | None:
@@ -1926,6 +2015,17 @@ def _grade(root: Path, task: dict) -> dict:
             if expected is not None and expected.get("formula") is not None:
                 expected["value"] = value
                 expected["cache_state"] = "value"
+
+    # Normalize only proven sums of the required FY dependencies. Cache, style,
+    # formula metadata and the numeric fixture inputs remain independently checked.
+    if golden_model is not None:
+        for qualified, references in task.get("numeric_sum_contract", {}).items():
+            title, address = qualified.rsplit("!", 1)
+            actual = output_model["sheets"].get(title, {}).get("cells", {}).get(address)
+            expected = golden_model["sheets"].get(title, {}).get("cells", {}).get(address)
+            if (actual is not None and expected is not None
+                    and matches_numeric_sum(actual.get("formula"), references)):
+                actual["formula"] = expected["formula"]
 
     pivot_config = task.get("pivot_refresh_contract", {})
     pivot_refreshed = False

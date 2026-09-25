@@ -6,6 +6,7 @@ from __future__ import annotations
 # Replaced by materialize_xlsx_graders.py in each standalone task grader.
 TASK = {'allowed_changed_parts': ['xl/worksheets/sheet1.xml'],
  'cells_from_golden': ['Summary!N18'],
+ 'cell_edit_scope': {'Summary': ['N18'], 'Intake': []},
  'formula_cache_invalidation': {'refreshed_values': {'Summary!N18': 350}},
  'golden': 'x14-validation-golden.xlsx',
  'id': 'formula-repair-with-x14-validation',
@@ -1917,6 +1918,19 @@ def _grade(root: Path, task: dict) -> dict:
             if expected is not None and expected.get("formula") is not None:
                 expected["value"] = value
                 expected["cache_state"] = "value"
+
+    # The oracle writer cleared unrelated caches. For a surgical repair, source
+    # cells are the preservation baseline outside the explicitly owned cells.
+    # cells_semantically_equal still permits safe invalidation with recalc flags.
+    for title, owned in task.get("cell_edit_scope", {}).items():
+        expected_cells = golden_model["sheets"][title]["cells"]
+        source_cells = primary_model["sheets"][title]["cells"]
+        for address in set(expected_cells) | set(source_cells):
+            if address not in owned:
+                if address in source_cells:
+                    expected_cells[address] = dict(source_cells[address])
+                else:
+                    expected_cells.pop(address, None)
 
     pivot_config = task.get("pivot_refresh_contract", {})
     pivot_refreshed = False
